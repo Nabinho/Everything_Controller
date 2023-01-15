@@ -73,12 +73,12 @@ typedef struct
   uint8_t leitura_botao4;
   uint8_t leitura_botao5;
   uint8_t leitura_botao6;
-  uint8_t leitura_eixoX1;
-  uint8_t leitura_eixoY1;
-  uint8_t leitura_eixoX2;
-  uint8_t leitura_eixoY2;
-  uint8_t leitura_Slide1;
-  uint8_t leitura_Slide2;
+  uint16_t leitura_eixoX1;
+  uint16_t leitura_eixoY1;
+  uint16_t leitura_eixoX2;
+  uint16_t leitura_eixoY2;
+  uint16_t leitura_Slide1;
+  uint16_t leitura_Slide2;
 } valores_controle;
 valores_controle controle;
 
@@ -154,7 +154,7 @@ const unsigned char lost_signal [] PROGMEM = {
 // Funcao para exibir barra de progresso para os sliders
 void drawProgressbar(int x, int y, int width, int height, int progress)
 {
-  float bar = ((float)(height - 2) / 100) * progress;
+  float bar = ((float)(height - 4) / 100) * progress;
   display.drawRect(x, y, width, height, WHITE);
   display.fillRect(x + 2, y + 2, width - 4, bar, WHITE);
 }
@@ -227,7 +227,7 @@ void setup()
   }
 
   // Comanda o radio para operar em baixo consumo de energia
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MAX);
 
   // Configura tempo maximo de espera para transmissao de dados sendo igual ao tamanho maximo da mensagem que sera enviada
   radio.setPayloadSize(sizeof(controle));
@@ -273,8 +273,8 @@ void loop()
   }
 
   // Mapeia as barras de progresso com as leituras dos sliders
-  progresso_sliders[0] = map(leituras_analogicas[4], 0, 1023, 0, 100);
-  progresso_sliders[1] = map(leituras_analogicas[5], 0, 1023, 0, 100);
+  progresso_sliders[0] = map(leituras_analogicas[4], 0, 1015, 100, 0);
+  progresso_sliders[1] = map(leituras_analogicas[5], 0, 1015, 100, 0);
 
   // Mapeia a leitura dos joysticks para posicoes validas dentro dos circulos de exibicao
   mapeamento_joysticks[0] = map(leituras_analogicas[3], 0, 1023, 45, 9);   // X1
@@ -288,16 +288,19 @@ void loop()
     if (i > 1)
     {
       leituras_digitais[i] = !digitalRead(PINOS_DIGITAIS[i]);
-      delay(10);
+      delay(5);
     }
     else
     {
       if (digitalRead(PINOS_DIGITAIS[i]) == LOW)
       {
-        delay(30);
+        delay(10);
         if (digitalRead(PINOS_DIGITAIS[i]) == LOW)
         {
           leituras_digitais[i] = !leituras_digitais[i];
+          while (digitalRead(PINOS_DIGITAIS[i]) == LOW)
+          {
+          }
         }
       }
     }
@@ -314,11 +317,11 @@ void loop()
   controle.leitura_eixoY1 = leituras_analogicas[2];
   controle.leitura_eixoX2 = leituras_analogicas[1];
   controle.leitura_eixoY2 = leituras_analogicas[0];
-  controle.leitura_Slide1 = leituras_analogicas[5];
-  controle.leitura_Slide2 = leituras_analogicas[6];
+  controle.leitura_Slide1 = leituras_analogicas[4];
+  controle.leitura_Slide2 = leituras_analogicas[5];
 
   // Realiza o envio de dados, e verifica o recebimento
-  delay(20);
+  delay(10);
   bool enviado = radio.write(&controle, sizeof(controle));
 
   if (enviado)
@@ -354,7 +357,6 @@ void loop()
   }
 
   // Exibe as atualizacoes do display
-  delay(10);
   display.display();
 }
 // ------------------------------------------------------------------------------

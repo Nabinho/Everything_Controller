@@ -37,12 +37,12 @@ typedef struct {
   uint8_t leitura_botao4;
   uint8_t leitura_botao5;
   uint8_t leitura_botao6;
-  uint8_t leitura_eixoX1;
-  uint8_t leitura_eixoY1;
-  uint8_t leitura_eixoX2;
-  uint8_t leitura_eixoY2;
-  uint8_t leitura_Slide1;
-  uint8_t leitura_Slide2;
+  uint16_t leitura_eixoX1;
+  uint16_t leitura_eixoY1;
+  uint16_t leitura_eixoX2;
+  uint16_t leitura_eixoY2;
+  uint16_t leitura_Slide1;
+  uint16_t leitura_Slide2;
 } variaveis_mensagem;
 variaveis_mensagem controle;
 
@@ -63,7 +63,7 @@ void setup() {
   }
 
   // Configura o radio para operar em baixo consumo de energia
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MAX);
 
   // Configura o radio para aguardar o tempo maximo igual ao tamanho da estrutura que sera recebida
   radio.setPayloadSize(sizeof(controle));
