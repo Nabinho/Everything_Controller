@@ -285,7 +285,7 @@ void loop()
   // Realiza as leituras digitais
   for (uint8_t i = 0; i < 6; i++)
   {
-    if (i > 1)
+    if (i > 3)
     {
       leituras_digitais[i] = !digitalRead(PINOS_DIGITAIS[i]);
       delay(5);
