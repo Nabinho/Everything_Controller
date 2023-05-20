@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Everything Controller - Codigo Base para o Controle (v1.0)
+ * Everything Controller (v1.0)
  *
- * Codigo base do controle "Everything Controller" para envio de dados para um
- * receptor. Comunicacao baseada em RF24 atraves do modulo NRF24L01+.
- * O controle envia dados de 6 botoes digitais, 2 joysticks (2 eixos X e 2 eixos Y),
- * assim como a leitura analogica de dois sliders.
- * Com esses dados e possivel o controle de diversos robos.
+ * Base code for the "Everything Controller" to send data to a receiver. 
+ * Communication is based on RF24 using the NRF24L01+ module. The controller 
+ * sends data from 6 digital buttons, 2 joysticks (2 X-axis and 2 Y-axis), as 
+ * well as the analog readings from two sliders. With this data, it is possible 
+ * to control various robots.
  *
- * Escrito por Giovanni de Castro (07/01/2023).
+ * Written by Giovanni de Castro (20/05/2023).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,7 @@
  * (at your option) any later version (<https://www.gnu.org/licenses/>).
  *******************************************************************************/
 
-// Bibliotecas
+// Libraries
 #include <SPI.h>
 #include <RF24.h>
 #include <Wire.h>
@@ -24,140 +24,134 @@
 #include <Adafruit_SSD1306.h>
 
 // ------------------------------------------------------------------------------
-// Pinos de controle do modulo de radio
-const uint8_t PINO_CE = 9;
-const uint8_t PINO_CSN = 10;
+// Control pins of the radio module
+const uint8_t PIN_CE = 9;
+const uint8_t PIN_CSN = 10;
 
-// Variaveis de controle do display OLED
-#define ENDERECO_I2C 0x3C
-#define LARGURA_DISPLAY 128
-#define ALTURA_DISPLAY 64
-#define RESET_DISPLAY -1
+// Control variables of the OLED display
+const uint8_t DISPLAY_ADDRESS = 0x3C;
+const uint8_t DISPLAY_WIDTH = 128;
+const uint8_t DISPLAY_HEIGHT = 64;
+const uint8_t DISPLAY_RESET = -1;
 
-// Pinos de controle dos LEDs
+// Control pins of the LEDs
 const uint8_t LED_STATUS = 8;
 const uint8_t LED_L = 13;
 
-// Pinos de entradas analogicas e digitais
+// Controller address
+const uint8_t RADIO_ADDRESSES[][6] = {"Ctrlr", "Robot"};
 
-// Endereco do controle
-const uint8_t ENDERECO_RADIO[][6] = {"Ctrlr", "Robot"};
+// Radio number
+const uint8_t RADIO_NUMBER = 0;
 
-// Numero do radio
-const uint8_t NUMERO_RADIO = 0;
+// Creation of the radio module control object
+RF24 radio(PIN_CE, PIN_CSN);
 
-// Criacao do objeto de controle do modulo
-RF24 radio(PINO_CE, PINO_CSN);
+// Creation of the display control object
+Adafruit_SSD1306 display(DISPLAY_WIDTH, DISPLAY_HEIGHT, &Wire, DISPLAY_RESET);
 
-// Objeto de controle do display
-Adafruit_SSD1306 display(LARGURA_DISPLAY, ALTURA_DISPLAY, &Wire, RESET_DISPLAY);
+// Variables for reading the button
+const uint8_t BUTTON1_PIN = 2;
+bool button1_reading;
+bool output1_state = LOW;
+bool button1_state;
+bool last_button1_state = HIGH;
+unsigned long last_debounce1 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO1 = 2;
-bool leitura_botao1;
-bool estado_saida1 = LOW;
-bool estado_botao1;
-bool ultimo_estado_botao1 = HIGH;
-unsigned long ultimo_tempo_debounce1 = 0;
+// Variables for reading the button
+const uint8_t BUTTON2_PIN = 3;
+bool button2_reading;
+bool output2_state = LOW;
+bool button2_state;
+bool last_button2_state = HIGH;
+unsigned long last_debounce2 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO2 = 3;
-bool leitura_botao2;
-bool estado_saida2 = LOW;
-bool estado_botao2;
-bool ultimo_estado_botao2 = HIGH;
-unsigned long ultimo_tempo_debounce2 = 0;
+// Variables for reading the button
+const uint8_t BUTTON3_PIN = 4;
+bool button3_reading;
+bool output3_state = LOW;
+bool button3_state;
+bool last_button3_state = HIGH;
+unsigned long last_debounce3 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO3 = 4;
-bool leitura_botao3;
-bool estado_saida3 = LOW;
-bool estado_botao3;
-bool ultimo_estado_botao3 = HIGH;
-unsigned long ultimo_tempo_debounce3 = 0;
+// Variables for reading the button
+const uint8_t BUTTON4_PIN = 5;
+bool button4_reading;
+bool output4_state = LOW;
+bool button4_state;
+bool last_button4_state = HIGH;
+unsigned long last_debounce4 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO4 = 5;
-bool leitura_botao4;
-bool estado_saida4 = LOW;
-bool estado_botao4;
-bool ultimo_estado_botao4 = HIGH;
-unsigned long ultimo_tempo_debounce4 = 0;
+// Variables for reading the button
+const uint8_t BUTTON5_PIN = 6;
+bool button5_reading;
+bool output5_state = LOW;
+bool button5_state;
+bool last_button5_state = HIGH;
+unsigned long last_debounce5 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO5 = 6;
-bool leitura_botao5;
-bool estado_saida5 = LOW;
-bool estado_botao5;
-bool ultimo_estado_botao5 = HIGH;
-unsigned long ultimo_tempo_debounce5 = 0;
+// Variables for reading the button
+const uint8_t BUTTON6_PIN = 7;
+bool button6_reading;
+bool output6_state = HIGH;
+bool button6_state;
+bool last_button6_state = HIGH;
+unsigned long last_debounce6 = 0;
 
-// Variaveis para a leitura do botao
-const uint8_t PINO_BOTAO6 = 7;
-bool leitura_botao6;
-bool estado_saida6 = HIGH;
-bool estado_botao6;
-bool ultimo_estado_botao6 = HIGH;
-unsigned long ultimo_tempo_debounce6 = 0;
+// Variable for buttons debounce
+const uint8_t DEBOUNCE = 50;
 
-// Variavel de debounce dos botoes
-const uint8_t DEBOUNCE_BOTOES = 50;
+// Variables for analog reading
+const uint8_t ANALOG1_PIN = A0;
+uint16_t analog1_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO1 = A0;
-uint16_t leitura_analogica1;
+// Variables for analog reading
+const uint8_t ANALOG2_PIN = A1;
+uint16_t analog2_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO2 = A1;
-uint16_t leitura_analogica2;
+// Variables for analog reading
+const uint8_t ANALOG3_PIN = A2;
+uint16_t analog3_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO3 = A2;
-uint16_t leitura_analogica3;
+// Variables for analog reading
+const uint8_t ANALOG4_PIN = A3;
+uint16_t analog4_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO4 = A3;
-uint16_t leitura_analogica4;
+// Variables for analog reading
+const uint8_t ANALOG5_PIN = A6;
+uint16_t analog5_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO5 = A6;
-uint16_t leitura_analogica5;
+// Variables for analog reading
+const uint8_t ANALOG6_PIN = A7;
+uint16_t analog6_reading;
 
-// Variaveis para a leitura analogica
-const uint8_t PINO_ANALOGICO6 = A7;
-uint16_t leitura_analogica6;
+// Variables for analog readings mappings
+uint16_t joysticks_mapping[4] = {0, 0, 0, 0};
+uint16_t sliders_mapping[2] = {0, 0};
 
-// Variaveis para mapeamento de leituras analogicas
-uint16_t mapeamento_joysticks[4] = {0, 0, 0, 0};
-uint16_t progresso_sliders[2] = {0, 0};
+// Variables for variables transmission timing
+unsigned long last_millis = 0;
+const uint8_t TX_INTERVAL = 50;
 
-// Declaracao das variaveis auxiliares para a temporizacao de envio de mensagens
-unsigned long tempo_antes = 0;
-const uint8_t INTERVALO = 50;
-
-/**********************
- * Copiar estrutura no
- * codigo do robo
- **********************/
-// Estrutura que armazena as variaveis que serao enviadas para o robo
+// Variables structure 
 typedef struct
 {
-  uint8_t leitura_botao1;
-  uint8_t leitura_botao2;
-  uint8_t leitura_botao3;
-  uint8_t leitura_botao4;
-  uint8_t leitura_botao5;
-  uint8_t leitura_botao6;
-  uint16_t leitura_eixoX1;
-  uint16_t leitura_eixoY1;
-  uint16_t leitura_eixoX2;
-  uint16_t leitura_eixoY2;
-  uint16_t leitura_Slide1;
-  uint16_t leitura_Slide2;
-} valores_controle;
-valores_controle controle;
+  uint8_t button1_reading;
+  uint8_t button2_reading;
+  uint8_t button3_reading;
+  uint8_t button4_reading;
+  uint8_t button5_reading;
+  uint8_t button6_reading;
+  uint16_t X1axis_reading;
+  uint16_t Y1axis_reading;
+  uint16_t X2axis_reading;
+  uint16_t Y2axis_reading;
+  uint16_t slider1_reading;
+  uint16_t slider2_reading;
+} controller_variables;
+controller_variables controller;
 
-// Imagem de sinal perdido com o robo
+// Lost signal image
 const unsigned char lost_signal[] PROGMEM = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -225,7 +219,7 @@ const unsigned char lost_signal[] PROGMEM = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 // ------------------------------------------------------------------------------
-// Funcao para exibir barra de progresso para os sliders
+// Function to display a progress bar for the sliders
 void drawProgressbar(int x, int y, int width, int height, int progress)
 {
   float bar = ((float)(height - 4) / 100) * progress;
@@ -234,7 +228,7 @@ void drawProgressbar(int x, int y, int width, int height, int progress)
 }
 
 // ------------------------------------------------------------------------------
-// Funcao para exibir o estado dos botoes
+// Function to display buttons states
 void drawButtonState(int x, int y, int width, int height, bool state)
 {
   display.drawRect(x, y, width, height, WHITE);
@@ -245,7 +239,7 @@ void drawButtonState(int x, int y, int width, int height, bool state)
 }
 
 // ------------------------------------------------------------------------------
-// Funcao para exibir as posicoes dos joysticks
+// Function to display the joysticks positions
 void drawJoyPosition(int x, int y, int radius, int px, int py)
 {
   display.drawCircle(x, y, radius, WHITE);
@@ -253,298 +247,292 @@ void drawJoyPosition(int x, int y, int radius, int px, int py)
 }
 
 // ------------------------------------------------------------------------------
-// Configuracoes de codigo
 void setup()
 {
 
-  // Inicia comunicacao serial, se o debug estiver declarado
+  // Serial monitor initialization for debug
   Serial.begin(9600);
 
-  // Configuracao dos LEDs
+  // LEDs configuration and initialization
   pinMode(LED_L, OUTPUT);
   digitalWrite(LED_L, LOW);
   pinMode(LED_STATUS, OUTPUT);
   digitalWrite(LED_STATUS, HIGH);
 
-  // Inicializacao do display OLED
-  if (!display.begin(SSD1306_SWITCHCAPVCC, ENDERECO_I2C))
-  { // Se a inicializacao nao for bem sucedida
-    // Exibe mensagem de erro no monitor serial, se opcao estiver definida
+  // OLED display initialization
+  if (!display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS))
+  {
     Serial.println(F("FALHA INICIALIZACAO DO DISPLAY!!!"));
-    while (!display.begin(SSD1306_SWITCHCAPVCC, ENDERECO_I2C))
-    { // Enquanto a inicializacao nao for bem sucedida
-      // Exibe mensagem de erro no monitor serial, se opcao estiver definida
+    while (!display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS))
+    {
       Serial.println(F("."));
-      // Pisca LED de alerta
+      // Blinks alert LED
       digitalWrite(LED_L, !digitalRead(LED_L));
       delay(100);
     }
   }
 
-  // Limpa o display se ele tiver com imagens do ultimo uso
+  // Clears the display from last usage
   display.clearDisplay();
   display.display();
 
-  // Inicializacao do modulo de radio
+  // Radio module initialization
   if (!radio.begin())
-  { // Se a inicializacao nao for bem sucedida
-    // Exibe mensagem de erro no monitor serial, se opcao estiver definida
+  { 
     Serial.println(F("FALHA NA INICIALIZACAO DO RADIO!!!"));
     while (!radio.begin())
-    { // Enquanto a inicializacao nao for bem sucedida
-      // Exibe mensagem de erro no monitor serial, se opcao estiver definida
+    { 
       Serial.println(F("."));
-      // Pisca LED de alerta
+      // Blinks alert LED
       digitalWrite(LED_L, !digitalRead(LED_L));
       delay(250);
     }
   }
 
-  // Comanda o radio para operar em baixo consumo de energia
+  // Confgures the radio for maximum PA level
   radio.setPALevel(RF24_PA_MAX);
 
-  // Configura tempo maximo de espera para transmissao de dados sendo igual ao tamanho maximo da mensagem que sera enviada
-  radio.setPayloadSize(sizeof(controle));
+  // Set the maximum waiting time for data transmission to be equal to the maximum size of the message to be sent
+  radio.setPayloadSize(sizeof(controller));
 
-  // Configura os canais de comunicacao
-  radio.openWritingPipe(ENDERECO_RADIO[NUMERO_RADIO]);
-  radio.openReadingPipe(1, ENDERECO_RADIO[!NUMERO_RADIO]);
+  // Configuration of the transmission channels
+  radio.openWritingPipe(RADIO_ADDRESSES[RADIO_NUMBER]);
+  radio.openReadingPipe(1, RADIO_ADDRESSES[!RADIO_NUMBER]);
 
-  // Inicializa o radio como transmissor
+  // Initializes the radio as transmitter
   radio.stopListening();
 
-  // Configuracao dos botoes
-  pinMode(PINO_BOTAO1, INPUT_PULLUP);
-  pinMode(PINO_BOTAO2, INPUT_PULLUP);
-  pinMode(PINO_BOTAO3, INPUT_PULLUP);
-  pinMode(PINO_BOTAO4, INPUT_PULLUP);
-  pinMode(PINO_BOTAO5, INPUT_PULLUP);
-  pinMode(PINO_BOTAO6, INPUT_PULLUP);
+  // Buttons configuration
+  pinMode(BUTTON1_PIN, INPUT_PULLUP);
+  pinMode(BUTTON2_PIN, INPUT_PULLUP);
+  pinMode(BUTTON3_PIN, INPUT_PULLUP);
+  pinMode(BUTTON4_PIN, INPUT_PULLUP);
+  pinMode(BUTTON5_PIN, INPUT_PULLUP);
+  pinMode(BUTTON6_PIN, INPUT_PULLUP);
 
-  // Configuracao dos pinos analogicos
-  pinMode(PINO_ANALOGICO1, INPUT);
-  pinMode(PINO_ANALOGICO2, INPUT);
-  pinMode(PINO_ANALOGICO3, INPUT);
-  pinMode(PINO_ANALOGICO4, INPUT);
-  pinMode(PINO_ANALOGICO5, INPUT);
-  pinMode(PINO_ANALOGICO6, INPUT);
+  // Analog pins configuration
+  pinMode(ANALOG1_PIN, INPUT);
+  pinMode(ANALOG2_PIN, INPUT);
+  pinMode(ANALOG3_PIN, INPUT);
+  pinMode(ANALOG4_PIN, INPUT);
+  pinMode(ANALOG5_PIN, INPUT);
+  pinMode(ANALOG6_PIN, INPUT);
 
-  // Atualiza o LED para indicar que o setup esta compelto
+  // Updates the status LED
   delay(1000);
   digitalWrite(LED_STATUS, LOW);
 }
 
 // ------------------------------------------------------------------------------
-// Repeticao de codigo
 void loop()
 {
 
-  // Realiza a leitura do botao
-  leitura_botao1 = digitalRead(PINO_BOTAO1);
-  if (leitura_botao1 != ultimo_estado_botao1)
+  // Reads the button
+  button1_reading = digitalRead(BUTTON1_PIN);
+  if (button1_reading != last_button1_state)
   {
-    ultimo_tempo_debounce1 = millis();
+    last_debounce1 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce1) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce1) > DEBOUNCE)
   {
-    if (leitura_botao1 != estado_botao1)
+    if (button1_reading != button1_state)
     {
-      estado_botao1 = leitura_botao1;
-      if (estado_botao1 == LOW)
+      button1_state = button1_reading;
+      if (button1_state == LOW)
       {
-        estado_saida1 = !estado_saida1;
+        output1_state = !output1_state;
       }
     }
   }
-  ultimo_estado_botao1 = leitura_botao1;
+  last_button1_state = button1_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica1 = analogRead(PINO_ANALOGICO1);
+  // Reads analog pin
+  analog1_reading = analogRead(ANALOG1_PIN);
 
-  // Realiza a leitura do botao
-  leitura_botao2 = digitalRead(PINO_BOTAO2);
-  if (leitura_botao2 != ultimo_estado_botao2)
+  // Reads the button
+  button2_reading = digitalRead(BUTTON2_PIN);
+  if (button2_reading != last_button2_state)
   {
-    ultimo_tempo_debounce2 = millis();
+    last_debounce2 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce2) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce2) > DEBOUNCE)
   {
-    if (leitura_botao2 != estado_botao2)
+    if (button2_reading != button2_state)
     {
-      estado_botao2 = leitura_botao2;
-      if (estado_botao2 == LOW)
+      button2_state = button2_reading;
+      if (button2_state == LOW)
       {
-        estado_saida2 = !estado_saida2;
+        output2_state = !output2_state;
       }
     }
   }
-  ultimo_estado_botao2 = leitura_botao2;
+  last_button2_state = button2_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica2 = analogRead(PINO_ANALOGICO2);
+  // Reads analog pin
+  analog2_reading = analogRead(ANALOG2_PIN);
 
-  // Realiza a leitura do botao
-  leitura_botao3 = digitalRead(PINO_BOTAO3);
-  if (leitura_botao3 != ultimo_estado_botao3)
+  // Reads the button
+  button3_reading = digitalRead(BUTTON3_PIN);
+  if (button3_reading != last_button3_state)
   {
-    ultimo_tempo_debounce3 = millis();
+    last_debounce3 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce3) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce3) > DEBOUNCE)
   {
-    if (leitura_botao3 != estado_botao3)
+    if (button3_reading != button3_state)
     {
-      estado_botao3 = leitura_botao3;
-      if (estado_botao3 == LOW)
+      button3_state = button3_reading;
+      if (button3_state == LOW)
       {
-        estado_saida3 = !estado_saida3;
+        output3_state = !output3_state;
       }
     }
   }
-  ultimo_estado_botao3 = leitura_botao3;
+  last_button3_state = button3_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica3 = analogRead(PINO_ANALOGICO3);
+  // Reads analog pin
+  analog3_reading = analogRead(ANALOG3_PIN);
 
-  // Realiza a leitura do botao
-  leitura_botao4 = digitalRead(PINO_BOTAO4);
-  if (leitura_botao4 != ultimo_estado_botao4)
+  // Reads the button
+  button4_reading = digitalRead(BUTTON4_PIN);
+  if (button4_reading != last_button4_state)
   {
-    ultimo_tempo_debounce4 = millis();
+    last_debounce4 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce4) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce4) > DEBOUNCE)
   {
-    if (leitura_botao4 != estado_botao4)
+    if (button4_reading != button4_state)
     {
-      estado_botao4 = leitura_botao4;
-      if (estado_botao4 == LOW)
+      button4_state = button4_reading;
+      if (button4_state == LOW)
       {
-        estado_saida4 = !estado_saida4;
+        output4_state = !output4_state;
       }
     }
   }
-  ultimo_estado_botao4 = leitura_botao4;
+  last_button4_state = button4_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica4 = analogRead(PINO_ANALOGICO4);
+  // Reads analog pin
+  analog4_reading = analogRead(ANALOG4_PIN);
 
-  // Realiza a leitura do botao
-  leitura_botao5 = digitalRead(PINO_BOTAO5);
-  if (leitura_botao5 != ultimo_estado_botao5)
+  // Reads the button
+  button5_reading = digitalRead(BUTTON5_PIN);
+  if (button5_reading != last_button5_state)
   {
-    ultimo_tempo_debounce5 = millis();
+    last_debounce5 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce5) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce5) > DEBOUNCE)
   {
-    if (leitura_botao5 != estado_botao5)
+    if (button5_reading != button5_state)
     {
-      estado_botao5 = leitura_botao5;
-      if (estado_botao5 == LOW)
+      button5_state = button5_reading;
+      if (button5_state == LOW)
       {
-        estado_saida5 = true;
+        output5_state = true;
       }
       else
       {
-        estado_saida5 = false;
+        output5_state = false;
       }
     }
   }
-  ultimo_estado_botao5 = leitura_botao5;
+  last_button5_state = button5_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica5 = analogRead(PINO_ANALOGICO5);
+  // Reads analog pin
+  analog5_reading = analogRead(ANALOG5_PIN);
 
-  // Realiza a leitura do botao
-  leitura_botao6 = digitalRead(PINO_BOTAO6);
-  if (leitura_botao6 != ultimo_estado_botao6)
+  // Reads the button
+  button6_reading = digitalRead(BUTTON6_PIN);
+  if (button6_reading != last_button6_state)
   {
-    ultimo_tempo_debounce6 = millis();
+    last_debounce6 = millis();
   }
-  if ((millis() - ultimo_tempo_debounce6) > DEBOUNCE_BOTOES)
+  if ((millis() - last_debounce6) > DEBOUNCE)
   {
-    if (leitura_botao6 != estado_botao6)
+    if (button6_reading != button6_state)
     {
-      estado_botao6 = leitura_botao6;
-      if (estado_botao6 == LOW)
+      button6_state = button6_reading;
+      if (button6_state == LOW)
       {
-        estado_saida6 = true;
+        output6_state = true;
       }
       else
       {
-        estado_saida6 = false;
+        output6_state = false;
       }
     }
   }
-  ultimo_estado_botao6 = leitura_botao6;
+  last_button6_state = button6_reading;
 
-  // Realiza a leitura analogica
-  leitura_analogica6 = analogRead(PINO_ANALOGICO6);
+  // Reads analog pin
+  analog6_reading = analogRead(ANALOG6_PIN);
 
-  // Mapeia as barras de progresso com as leituras dos sliders
-  progresso_sliders[0] = map(leitura_analogica5, 0, 1015, 100, 0);
-  progresso_sliders[1] = map(leitura_analogica6, 0, 1015, 100, 0);
+  // Maps the progress bars to the readings of the sliders
+  sliders_mapping[0] = map(analog5_reading, 0, 1015, 100, 0);
+  sliders_mapping[1] = map(analog6_reading, 0, 1015, 100, 0);
 
-  // Mapeia a leitura dos joysticks para posicoes validas dentro dos circulos de exibicao
-  mapeamento_joysticks[0] = map(leitura_analogica4, 0, 1023, 45, 9);   // X1
-  mapeamento_joysticks[1] = map(leitura_analogica3, 0, 1023, 49, 13);  // Y1
-  mapeamento_joysticks[2] = map(leitura_analogica2, 0, 1023, 119, 83); // X2
-  mapeamento_joysticks[3] = map(leitura_analogica1, 0, 1023, 49, 13);  // Y2
+  // Maps the readings of the joysticks to valid positions within the display circles
+  joysticks_mapping[0] = map(analog4_reading, 0, 1023, 45, 9);   // X1
+  joysticks_mapping[1] = map(analog3_reading, 0, 1023, 49, 13);  // Y1
+  joysticks_mapping[2] = map(analog2_reading, 0, 1023, 119, 83); // X2
+  joysticks_mapping[3] = map(analog1_reading, 0, 1023, 49, 13);  // Y2
 
-  // Atualiza as variaveis para envio
-  controle.leitura_botao1 = estado_saida1;
-  controle.leitura_botao2 = estado_saida2;
-  controle.leitura_botao3 = estado_saida3;
-  controle.leitura_botao4 = estado_saida4;
-  controle.leitura_botao5 = estado_saida5;
-  controle.leitura_botao6 = estado_saida6;
-  controle.leitura_eixoX1 = leitura_analogica4;
-  controle.leitura_eixoY1 = leitura_analogica3;
-  controle.leitura_eixoX2 = leitura_analogica2;
-  controle.leitura_eixoY2 = leitura_analogica1;
-  controle.leitura_Slide1 = leitura_analogica5;
-  controle.leitura_Slide2 = leitura_analogica6;
+  // Updates the variables for transmission
+  controller.button1_reading = output1_state;
+  controller.button2_reading = output2_state;
+  controller.button3_reading = output3_state;
+  controller.button4_reading = output4_state;
+  controller.button5_reading = output5_state;
+  controller.button6_reading = output6_state;
+  controller.X1axis_reading = analog4_reading;
+  controller.Y1axis_reading = analog3_reading;
+  controller.X2axis_reading = analog2_reading;
+  controller.Y2axis_reading = analog1_reading;
+  controller.slider1_reading = analog5_reading;
+  controller.slider2_reading = analog6_reading;
 
-  if ((millis() - tempo_antes) > INTERVALO)
+  if ((millis() - last_millis) > TX_INTERVAL)
   {
 
-    // Limpa o display a cada repeticao
+    // Clears display
     display.clearDisplay();
+    display.invertDisplay(false);
 
-    // Realiza o envio de dados, e verifica o recebimento
-    bool enviado = radio.write(&controle, sizeof(controle));
+    // Sends the data and checks for reception
+    bool enviado = radio.write(&controller, sizeof(controller));
 
     if (enviado)
     {
-      // Atualiza as barras de progresso
-      display.invertDisplay(false);
-      drawProgressbar(52, 10, 10, 44, progresso_sliders[0]);
-      drawProgressbar(64, 10, 10, 44, progresso_sliders[1]);
+      // Updates and displays progress bars
+      drawProgressbar(52, 10, 10, 44, sliders_mapping[0]);
+      drawProgressbar(64, 10, 10, 44, sliders_mapping[1]);
 
-      // Exibe as posicoes dos joysticks
-      drawJoyPosition(27, 31, 20, mapeamento_joysticks[0], mapeamento_joysticks[1]);
-      drawJoyPosition(101, 31, 20, mapeamento_joysticks[2], mapeamento_joysticks[3]);
+      // Updates and displays the joysticks positions
+      drawJoyPosition(27, 31, 20, joysticks_mapping[0], joysticks_mapping[1]);
+      drawJoyPosition(101, 31, 20, joysticks_mapping[2], joysticks_mapping[3]);
 
-      // Exibe no display o estado dos botoes
-      drawButtonState(2, 0, 60, 10, estado_saida1);
-      drawButtonState(64, 0, 60, 10, estado_saida2);
-      drawButtonState(2, 54, 29, 10, estado_saida3);
-      drawButtonState(33, 54, 29, 10, estado_saida4);
-      drawButtonState(64, 54, 29, 10, estado_saida5);
-      drawButtonState(95, 54, 29, 10, estado_saida6);
+      // Updates and displays the buttons states
+      drawButtonState(2, 0, 60, 10, output1_state);
+      drawButtonState(64, 0, 60, 10, output2_state);
+      drawButtonState(2, 54, 29, 10, output3_state);
+      drawButtonState(33, 54, 29, 10, output4_state);
+      drawButtonState(64, 54, 29, 10, output5_state);
+      drawButtonState(95, 54, 29, 10, output6_state);
 
-      // Pisca o LED para indicar envio de mensagem
+      // Blinks the LED
       digitalWrite(LED_STATUS, !digitalRead(LED_STATUS));
     }
     else
     {
-      // Exibe a imagem de sinal perdido
+      // Displays lost signal image
       display.invertDisplay(true);
       display.drawBitmap(0, 0, lost_signal, 128, 64, 1);
 
-      // Mantem o LED aceso para indicar erro
+      // Keeps the LED ON
       digitalWrite(LED_STATUS, HIGH);
     }
 
-    // Exibe as atualizacoes do display
+    // Shows displays update
     display.display();
   }
 }
