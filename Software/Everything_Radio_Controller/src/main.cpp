@@ -1,10 +1,10 @@
 /*******************************************************************************
  * Everything Controller (v1.0)
  *
- * Base code for the "Everything Controller" to send data to a receiver. 
- * Communication is based on RF24 using the NRF24L01+ module. The controller 
- * sends data from 6 digital buttons, 2 joysticks (2 X-axis and 2 Y-axis), as 
- * well as the analog readings from two sliders. With this data, it is possible 
+ * Base code for the "Everything Controller" to send data to a receiver.
+ * Communication is based on RF24 using the NRF24L01+ module. The controller
+ * sends data from 6 digital buttons, 2 joysticks (2 X-axis and 2 Y-axis), as
+ * well as the analog readings from two sliders. With this data, it is possible
  * to control various robots.
  *
  * Written by Giovanni de Castro (20/05/2023).
@@ -133,7 +133,7 @@ uint16_t sliders_mapping[2] = {0, 0};
 unsigned long last_millis = 0;
 const uint8_t TX_INTERVAL = 50;
 
-// Variables structure 
+// Variables structure
 typedef struct
 {
   uint8_t button1_reading;
@@ -278,10 +278,10 @@ void setup()
 
   // Radio module initialization
   if (!radio.begin())
-  { 
+  {
     Serial.println(F("FALHA NA INICIALIZACAO DO RADIO!!!"));
     while (!radio.begin())
-    { 
+    {
       Serial.println(F("."));
       // Blinks alert LED
       digitalWrite(LED_L, !digitalRead(LED_L));
@@ -496,7 +496,6 @@ void loop()
 
     // Clears display
     display.clearDisplay();
-    display.invertDisplay(false);
 
     // Sends the data and checks for reception
     bool enviado = radio.write(&controller, sizeof(controller));
@@ -504,6 +503,7 @@ void loop()
     if (enviado)
     {
       // Updates and displays progress bars
+      display.invertDisplay(false);
       drawProgressbar(52, 10, 10, 44, sliders_mapping[0]);
       drawProgressbar(64, 10, 10, 44, sliders_mapping[1]);
 
