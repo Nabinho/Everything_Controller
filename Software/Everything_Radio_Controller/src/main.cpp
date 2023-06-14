@@ -264,7 +264,7 @@ void setup()
   // OLED display initialization
   if (!display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS))
   {
-    Serial.println(F("FALHA INICIALIZACAO DO DISPLAY!!!"));
+    Serial.println(F("DISPLAY INITIALIZATION FAILED!!!"));
     while (!display.begin(SSD1306_SWITCHCAPVCC, DISPLAY_ADDRESS))
     {
       Serial.println(F("."));
@@ -281,7 +281,7 @@ void setup()
   // Radio module initialization
   if (!radio.begin())
   {
-    Serial.println(F("FALHA NA INICIALIZACAO DO RADIO!!!"));
+    Serial.println(F("RADIO INITIALIZATION FAILED!!!"));
     while (!radio.begin())
     {
       Serial.println(F("."));
@@ -291,7 +291,7 @@ void setup()
     }
   }
 
-  // Confgures the radio for maximum PA level
+  // Configure the radio for maximum PA level
   radio.setPALevel(RF24_PA_MAX);
 
   // Set the maximum waiting time for data transmission to be equal to the maximum size of the message to be sent
@@ -500,9 +500,9 @@ void loop()
     display.clearDisplay();
 
     // Sends the data and checks for reception
-    bool enviado = radio.write(&controller, sizeof(controller));
+    bool sent = radio.write(&controller, sizeof(controller));
 
-    if (enviado)
+    if (sent)
     {
       // Updates and displays progress bars
       display.invertDisplay(false);
