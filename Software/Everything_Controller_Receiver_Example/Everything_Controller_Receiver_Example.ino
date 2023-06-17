@@ -21,7 +21,7 @@
 #include "RF24.h"
 
 // Criacao do objeto de controle do radio receptor
-RF24 radio(9, 10); // 9 -> CE | 10 -> CSN
+RF24 radio(20, 17); // 9 -> CE | 10 -> CSN
 
 // Enderecos dos radios (controle e receptor (robo))
 uint8_t address[][6] = { "Ctrlr", "Robot" };
