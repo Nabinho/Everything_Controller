@@ -15,8 +15,6 @@
  * (at your option) any later version (<https://www.gnu.org/licenses/>).
  *******************************************************************************/
 
-
-
 // Libraries
 #include <SPI.h>
 #include <RF24.h>
@@ -134,6 +132,8 @@ uint16_t sliders_mapping[2] = {0, 0};
 // Variables for variables transmission timing
 unsigned long last_millis = 0;
 const uint8_t TX_INTERVAL = 50;
+unsigned long last_message = millis();
+const uint16_t TX_TIMEOUT = 500;
 
 // Variables structure
 typedef struct
@@ -505,6 +505,7 @@ void loop()
     if (sent)
     {
       // Updates and displays progress bars
+      last_message = millis();
       display.invertDisplay(false);
       drawProgressbar(52, 10, 10, 44, sliders_mapping[0]);
       drawProgressbar(64, 10, 10, 44, sliders_mapping[1]);
@@ -524,7 +525,7 @@ void loop()
       // Blinks the LED
       digitalWrite(LED_STATUS, !digitalRead(LED_STATUS));
     }
-    else
+    else if ((millis() - last_message) > TX_TIMEOUT)
     {
       // Displays lost signal image
       display.invertDisplay(true);
@@ -536,6 +537,7 @@ void loop()
 
     // Shows displays update
     display.display();
+    last_millis = millis();
   }
 }
 // ------------------------------------------------------------------------------
