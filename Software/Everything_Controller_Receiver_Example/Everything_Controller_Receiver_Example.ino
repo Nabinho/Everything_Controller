@@ -20,14 +20,8 @@
 #include "printf.h"
 #include "RF24.h"
 
-const uint8_t MY_MISO = 19;
-const uint8_t MY_MOSI = 23;
-const uint8_t MY_SCLK = 18;
-const uint8_t MY_SS = 5;
-
 // Criacao do objeto de controle do radio receptor
-RF24 radio(4, 5); // 9 -> CE | 10 -> CSN
-SPIClass* hspi = nullptr;
+RF24 radio(9, 10); // 9 -> CE | 10 -> CSN
 
 // Enderecos dos radios (controle e receptor (robo))
 uint8_t address[][6] = { "Ctrlr", "Robot" };
@@ -60,13 +54,10 @@ uint8_t bytes;
 void setup() {
 
   // Inicializacao do monitor serial para verificar dados recebidos
-  Serial.begin(115200);
-
-  hspi = new SPIClass(HSPI);
-  hspi->begin(MY_SCLK, MY_MISO, MY_MOSI, MY_SS);
+  Serial.begin(9600);
 
   // Inicializacao da comunicacao SPI e do radio
-  if (!radio.begin(hspi)) {
+  if (!radio.begin()) {
     Serial.println(F("Falha na inicializacao do radio"));
     while (1) {}  // hold in infinite loop
   }

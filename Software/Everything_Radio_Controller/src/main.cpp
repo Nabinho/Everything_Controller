@@ -7,7 +7,7 @@
  * well as the analog readings from two sliders. With this data, it is possible
  * to control various robots.
  *
- * Written by Giovanni de Castro (20/05/2023).
+ * Written by Giovanni de Castro (19/11/2023).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -32,7 +32,7 @@ const uint8_t PIN_CSN = 10;
 const uint8_t DISPLAY_ADDRESS = 0x3C;
 const uint8_t DISPLAY_WIDTH = 128;
 const uint8_t DISPLAY_HEIGHT = 64;
-const uint8_t DISPLAY_RESET = -1;
+const int8_t DISPLAY_RESET = -1;
 
 // Control pins of the LEDs
 const uint8_t LED_STATUS = 8;
@@ -580,8 +580,6 @@ void loop()
       drawButtonState(33, 54, 29, 10, output6_state);
       drawButtonState(64, 54, 29, 10, output5_state);
       drawButtonState(95, 54, 29, 10, output4_state);
-
-      // digitalWrite(LED_STATUS, !digitalRead(LED_STATUS));
     }
     else if ((millis() - last_message) > TX_TIMEOUT)
     {
